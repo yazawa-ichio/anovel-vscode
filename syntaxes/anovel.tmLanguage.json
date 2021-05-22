@@ -1,0 +1,100 @@
+{
+	"$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+	"name": "ANovel",
+	"patterns": [
+		{
+			"include": "#comment"
+		},
+		{
+			"include": "#command"
+		},
+		{
+			"include": "#systemcommand"
+		},
+		{
+			"include": "#preprocess"
+		},
+		{
+			"include": "#label"
+		}
+	],
+	"repository": {
+		"comment": {
+			"patterns": [
+				{
+					"match": "^\\s*;.*",
+					"name": "comment.line.anovel"
+				}
+			]
+		},
+		"command": {
+			"name": "keyword.control.command.anovel",
+			"begin": "^\\s*@\\S+",
+			"patterns": [
+				{
+					"include": "#attribute"
+				}
+			],
+			"end": "$"
+		},
+		"systemcommand": {
+			"name": "keyword.control.command.anovel",
+			"begin": "^\\s*&\\S+",
+			"beginCaptures": {
+				"0": {
+					"name": "markup.italic.anovel"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#attribute"
+				}
+			],
+			"end": "$"
+		},
+		"preprocess": {
+			"name": "entity.name.function.anovel",
+			"begin": "^\\s*#\\S+",
+			"patterns": [
+				{
+					"include": "#attribute"
+				}
+			],
+			"end": "$"
+		},
+		"label": {
+			"name": "comment.line.label.anovel",
+			"begin": "^\\s*\\*\\S+",
+			"beginCaptures": {
+				"0": {
+					"name": "markup.italic.anovel"
+				}
+			},
+			"patterns": [
+				{
+					"include": "#attribute"
+				}
+			],
+			"end": "$"
+		},
+		"attribute": {
+			"patterns": [
+				{
+					"match": "(\\w+)(\\s*=)(\\s*(&?%?(\".*?\"|'.*?'|[^\\s\\]=]+)))?",
+					"captures": {
+						"1": {
+							"name": "entity.other.attribute-name.anovel"
+						},
+						"2": {
+							"name": "keyword.operator.anovel"
+						},
+						"3": {
+							"name": "constant.language.arg.anovel"
+						}
+					}
+				}
+			]
+		}
+	},
+	"scopeName": "source.anovel"
+}

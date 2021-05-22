@@ -1,0 +1,33 @@
+{
+    "name": "anovel-vscode",
+    "displayName": "anovel-vscode",
+    "description": "",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.56.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [
+            {
+                "id": "anovel",
+                "aliases": [
+                    "ANovel"
+                ],
+                "extensions": [
+                    ".anovel"
+                ],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "anovel",
+                "scopeName": "source.anovel",
+                "path": "./syntaxes/anovel.tmLanguage.json"
+            }
+        ]
+    }
+}
