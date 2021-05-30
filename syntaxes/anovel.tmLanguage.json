@@ -29,7 +29,7 @@
 		},
 		"command": {
 			"name": "keyword.control.command.anovel",
-			"begin": "^\\s*@\\S+",
+			"begin": "^\\s*@\\S*",
 			"patterns": [
 				{
 					"include": "#attribute"
@@ -39,7 +39,7 @@
 		},
 		"systemcommand": {
 			"name": "keyword.control.command.anovel",
-			"begin": "^\\s*&\\S+",
+			"begin": "^\\s*&\\S*",
 			"beginCaptures": {
 				"0": {
 					"name": "markup.italic.anovel"
@@ -54,7 +54,7 @@
 		},
 		"preprocess": {
 			"name": "entity.name.function.anovel",
-			"begin": "^\\s*#\\S+",
+			"begin": "^\\s*#\\S*",
 			"patterns": [
 				{
 					"include": "#attribute"
