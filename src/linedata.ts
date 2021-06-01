@@ -8,7 +8,7 @@ enum LineDataParseState {
 	value,
 }
 
-class LineDataToken {
+export class LineDataToken {
 	static readonly comment = ';';
 	static readonly preProcess = '#';
 	static readonly label = '*';
@@ -29,14 +29,14 @@ class LineDataToken {
 export class LineData {
 
 	line: string;
-	linetType: string = "";
+	lineType: string = "";
 	name: string = "";
 	keys: string[];
 	error: boolean = false;
 	dic: Map<string, string | undefined>;
 
 	constructor(line: string) {
-		this.linetType = "";
+		this.lineType = "";
 		this.line = line;
 		this.dic = new Map<string, string | undefined>();
 		this.parse();
@@ -48,7 +48,7 @@ export class LineData {
 
 	parse() {
 		const text = this.line.trim();
-		this.linetType = text.charAt(0);
+		this.lineType = text.charAt(0);
 		const nameEnd = text.indexOf(" ");
 		if (nameEnd < 0) {
 			this.name = text.substring(1);

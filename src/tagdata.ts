@@ -1,7 +1,7 @@
 import { CompletionItem, CompletionItemKind, SnippetString } from "vscode";
 import { LineData } from "./linedata";
 import { ArgumentInput } from "./argumentinput";
-
+import { ArgumentDefine, TagDefine } from "./define";
 
 class ArgumentData {
 
@@ -28,41 +28,50 @@ class ArgumentData {
 export class TagData {
 
 	define: TagDefine;
-	attributeNames: CompletionItem[];
-	attributes: Map<string, ArgumentData>;
+	argumentNames: CompletionItem[];
+	arguments: Map<string, ArgumentData>;
 
 	constructor(define: TagDefine) {
 		this.define = define;
-		this.attributeNames = [];
-		this.attributes = new Map();
+		this.argumentNames = [];
+		this.arguments = new Map();
 		let sort = 0;
+		const set = new Set<string>();
 		for (const attr of this.define.Arguments) {
 			if (!attr.Required) {
 				continue;
 			}
+			if (set.has(attr.Name)) {
+				continue;
+			}
+			set.add(attr.Name);
 			const item = new CompletionItem(attr.Name + "(必須)", CompletionItemKind.Property);
 			item.insertText = attr.Name;
 			item.sortText = (sort++).toString().padStart(8, '0');
 			item.documentation = attr.Description;
-			this.attributeNames?.push(item);
-			this.attributes.set(attr.Name, new ArgumentData(attr));
+			this.argumentNames?.push(item);
+			this.arguments.set(attr.Name, new ArgumentData(attr));
 		}
 		for (const attr of this.define.Arguments) {
 			if (attr.Required) {
 				continue;
 			}
+			if (set.has(attr.Name)) {
+				continue;
+			}
+			set.add(attr.Name);
 			const item = new CompletionItem(attr.Name, CompletionItemKind.Property);
 			item.insertText = attr.Name;
 			item.sortText = (sort++).toString().padStart(8, '0');
 			item.documentation = attr.Description;
-			this.attributeNames?.push(item);
-			this.attributes.set(attr.Name, new ArgumentData(attr));
+			this.argumentNames?.push(item);
+			this.arguments.set(attr.Name, new ArgumentData(attr));
 		}
 	}
 
-	getAttributeKey(data: LineData): CompletionItem[] {
+	getArgumentKey(data: LineData): CompletionItem[] {
 		const items: CompletionItem[] = [];
-		for (const item of this.attributeNames) {
+		for (const item of this.argumentNames) {
 			const name = item.insertText?.toString() ?? "";
 			if (data.dic.has(name)) {
 				continue;
@@ -72,8 +81,8 @@ export class TagData {
 		return items;
 	}
 
-	getAttributeValues(key: string): CompletionItem[] {
-		const attr = this.attributes.get(key) ?? ArgumentData.default;
+	getArgumentValues(key: string): CompletionItem[] {
+		const attr = this.arguments.get(key) ?? ArgumentData.default;
 		return attr.getValues();
 	}
 

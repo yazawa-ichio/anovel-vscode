@@ -2,11 +2,12 @@
 
 // C#側の定義と同じ物です。
 
-class ProjectDefine {
+export class ProjectDefine {
 	Tags!: TagDefine[];
+	CompletionItem!: CompletionItemDefine;
 }
 
-class TagDefine {
+export class TagDefine {
 	Name!: string;
 	Symbols!: string;
 	LineType!: string;
@@ -14,10 +15,35 @@ class TagDefine {
 	Arguments!: ArgumentDefine[];
 }
 
-class ArgumentDefine {
+export class ArgumentDefine {
 	Name!: string;
 	Description!: string;
 	Required!: boolean;
 	InputType!: string;
 	InputOptions!: string[];
+}
+
+export class CompletionItemDefine {
+	ReplaceTag!: ReplaceTagDefine[];
+	ArgumentValue!: ArgumentValueDefine[];
+}
+
+export class ReplaceTagDefine {
+	LineType!: string;
+	RegisterTag!: string;
+	Key!: string;
+	Replace!: string;
+	SecondaryKey!: string;
+	SecondaryKeyValue!: string;
+	Label!: string;
+}
+
+export class ArgumentValueDefine {
+	LineType!: string;
+	RegisterTag!: string;
+	TargetTag!: string;
+	Argument!: string;
+	Value!: string;
+	SecondaryKey!: string;
+	SecondaryKeyValue!: string;
 }

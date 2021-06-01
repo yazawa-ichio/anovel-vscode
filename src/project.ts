@@ -1,7 +1,10 @@
 import { readFileSync } from "fs";
 import { dirname } from "path";
 import { CompletionContext, Position, TextDocument, Uri, CompletionItem, CompletionItemKind } from "vscode";
+import { ProjectDefine } from "./define";
 import { LineData } from "./linedata";
+import { PreProcessor } from "./preprocessor";
+import { PreProcessResult } from "./preprocessresult";
 import { TagData } from "./tagdata";
 
 
@@ -13,6 +16,7 @@ export class Project {
 
 	tagNames: Map<string, CompletionItem[]>;
 	tags: Map<string, TagData>;
+	preProcessor: PreProcessor;
 
 	constructor(file: Uri) {
 		this.file = file;
@@ -21,6 +25,7 @@ export class Project {
 		this.define = JSON.parse(json) as ProjectDefine;
 		this.tagNames = new Map<string, CompletionItem[]>();
 		this.tags = new Map<string, TagData>();
+		this.preProcessor = new PreProcessor(file.fsPath, this.define);
 		this.initTags();
 	}
 
@@ -37,26 +42,28 @@ export class Project {
 		}
 	}
 
-	provideCompletionItems(document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
+	async provideCompletionItems(document: TextDocument, position: Position, context: CompletionContext): Promise<CompletionItem[]> {
+		const preProcess = await this.preProcessor.run(document.uri.fsPath);
 		const line = document.lineAt(position.line);
 		const trgChr = context.triggerCharacter;
 		switch (trgChr) {
 			case '@':
 			case '&':
 			case '#':
-				return this.provideStartTag(trgChr, document, position, context);
+				return this.provideTagStart(preProcess, trgChr, document, position, context);
 			case ' ':
-				return this.provideTagAttributeKey(document, position, context);
+				return this.provideTagArgumentKey(preProcess, document, position, context);
 			case '=':
-				return this.provideTagAttributeValue(document, position, context);
+				return this.provideTagArgumentValue(preProcess, document, position, context);
 		}
 		return [];
 	}
 
-	provideStartTag(token: string, document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
+	provideTagStart(preProcess: PreProcessResult, token: string, document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
 		const line = document.lineAt(position.line);
 		if (line.firstNonWhitespaceCharacterIndex === position.character - 1) {
-			return this.tagNames.get(token) ?? [];
+			const tags = preProcess.getStartTag(token);
+			return this.tagNames.get(token)?.concat(tags) ?? tags;
 		}
 		return [];
 	}
@@ -87,27 +94,27 @@ export class Project {
 		return false;
 	}
 
-	getTagData(document: TextDocument, position: Position): TagData | undefined {
+	getTagData(preProcess: PreProcessResult, document: TextDocument, position: Position): [TagData | undefined, LineData | undefined] {
 		const line = document.lineAt(position.line);
 		if (line.isEmptyOrWhitespace) {
-			return undefined;
+			return [undefined, undefined];
 		}
 		const tokenIndex = line.firstNonWhitespaceCharacterIndex;
 		const token = line.text.charAt(tokenIndex);
 		if (token !== '@' && token !== '&' && token !== '&') {
-			return undefined;
+			return [undefined, undefined];
 		}
 		const nameEndIndex = line.text.indexOf(" ", tokenIndex);
 		if (nameEndIndex < tokenIndex) {
-			return undefined;
+			return [undefined, undefined];
 		}
-		const tagName = line.text.substring(tokenIndex, nameEndIndex);
-		return this.tags.get(tagName);
+		const [tagName, text] = preProcess.replaceTag(line.text.substring(tokenIndex, nameEndIndex), line.text);
+		return [this.tags.get(tagName) ?? preProcess.getMacro(tagName), new LineData(text)];
 	}
 
-	provideTagAttributeKey(document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
+	provideTagArgumentKey(preProcess: PreProcessResult, document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
 		const line = document.lineAt(position.line);
-		const tag = this.getTagData(document, position);
+		const [tag, data] = this.getTagData(preProcess, document, position);
 		if (tag === undefined) {
 			return [];
 		}
@@ -117,7 +124,7 @@ export class Project {
 		if (this.isLeftEqual(line.text, position)) {
 			return [];
 		}
-		return tag.getAttributeKey(new LineData(line.text));
+		return tag.getArgumentKey(data ?? new LineData(line.text));
 	}
 
 	getLeftKey(line: string, position: Position): string | undefined {
@@ -148,10 +155,10 @@ export class Project {
 		return undefined;
 	}
 
-	provideTagAttributeValue(document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
+	provideTagArgumentValue(preProcess: PreProcessResult, document: TextDocument, position: Position, context: CompletionContext): CompletionItem[] {
 		const line = document.lineAt(position.line);
-		const tag = this.getTagData(document, position);
-		if (tag === undefined) {
+		const [tag, data] = this.getTagData(preProcess, document, position);
+		if (tag === undefined || data === undefined) {
 			return [];
 		}
 		if (this.isBetweenDoubleQuotation(line.text, position)) {
@@ -161,7 +168,8 @@ export class Project {
 		if (key === undefined) {
 			return [];
 		}
-		return tag.getAttributeValues(key) || [];
+		const ret = preProcess.getArgumentValue(data, key);
+		return ret.concat(tag.getArgumentValues(key));
 	}
 
 }

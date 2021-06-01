@@ -1,5 +1,3 @@
-import { readFileSync } from 'fs';
-import { dirname } from 'path';
 import * as vscode from 'vscode';
 import { Project } from './project';
 
@@ -23,23 +21,29 @@ export class Anovel implements vscode.CompletionItemProvider {
 			this.setupProject(file);
 		}
 		this.ctx.subscriptions.push(vscode.languages.registerCompletionItemProvider(aovelDocument, this, '@', '&', '#', ' ', '='));
+		vscode.workspace.onDidSaveTextDocument(e => {
+			if (e.fileName.endsWith(".anovel")) {
+				const project = this.getProject(e.uri);
+				project?.preProcessor.delete(e.fileName);
+			}
+			if (e.fileName === "anovel.json") {
+				this.setupProject(e.uri);
+			}
+		}, null, this.ctx.subscriptions);
 		vscode.workspace.onDidChangeTextDocument(e => {
-			const doc = e.document;
-			if (e.contentChanges.length === 0) {
-				return;
+			if (e.document.fileName.endsWith(".anovel")) {
+				const project = this.getProject(e.document.uri);
+				project?.preProcessor.delete(e.document.fileName);
 			}
-			if (doc.fileName.endsWith(".anovel")) {
-				// TODO　マクロ再読み込み
-			}
-			if (doc.fileName === "anovel.json") {
-				this.setupProject(doc.uri);
+			if (e.document.fileName === "anovel.json") {
+				this.setupProject(e.document.uri);
 			}
 		}, null, this.ctx.subscriptions);
 	}
 
 	setupProject(file: vscode.Uri) {
 		for (let i = 0; i < this.projects.length; i++) {
-			if (this.projects[i].file === file) {
+			if (this.projects[i].file.fsPath === file.fsPath) {
 				this.projects[i] = new Project(file);
 				return;
 			}
@@ -47,18 +51,18 @@ export class Anovel implements vscode.CompletionItemProvider {
 		this.projects.push(new Project(file));
 	}
 
-	getProject(file: vscode.Uri): Project | null {
+	getProject(file: vscode.Uri): Project | undefined {
 		for (const project of this.projects) {
 			if (file.fsPath.startsWith(project.dir)) {
 				return project;
 			}
 		}
-		return null;
+		return undefined;
 	}
 
 	provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext): vscode.ProviderResult<vscode.CompletionItem[] | vscode.CompletionList<vscode.CompletionItem>> {
 		const project = this.getProject(document.uri);
-		if (project !== null) {
+		if (project !== undefined) {
 			return project.provideCompletionItems(document, position, context);
 		}
 		return [];
