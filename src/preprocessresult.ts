@@ -1,6 +1,7 @@
 import { CompletionItem, CompletionItemKind } from "vscode";
 import { TagDefine, ArgumentDefine } from "./define";
 import { LineData, LineDataToken } from "./linedata";
+import { Project } from "./project";
 import { TagData } from "./tagdata";
 
 
@@ -53,9 +54,11 @@ export class PreProcessResult {
 	private tagCompletionItems: Map<string, CompletionItem[]>;
 	private argumentValues: Map<string, Map<string, ArgumentValue[]>>;
 	private macroTagData: Map<string, TagData>;
+	private project: Project;
 
-	constructor(fullPath: string) {
+	constructor(fullPath: string, project: Project) {
 		this.fullPath = fullPath;
+		this.project = project;
 		this.macroData = [];
 		this.replaceTagData = [];
 		this.depend = [];
@@ -89,7 +92,7 @@ export class PreProcessResult {
 			arg.InputType = "None";
 			define.Arguments.push(arg);
 		}
-		this.macroTagData.set(LineDataToken.command + macro.name, new TagData(define));
+		this.macroTagData.set(LineDataToken.command + macro.name, new TagData(define, this.project));
 	}
 
 	addReplaceTag(key: string, replace: string, secondaryKey: string, secondaryKeyValue: string, label: string) {

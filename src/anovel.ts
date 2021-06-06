@@ -16,7 +16,7 @@ export class Anovel implements vscode.CompletionItemProvider {
 	}
 
 	async setup() {
-		const files = await vscode.workspace.findFiles("anovel.json");
+		const files = await vscode.workspace.findFiles("ANovelProject");
 		for (const file of files) {
 			this.setupProject(file);
 		}

@@ -1,6 +1,6 @@
 import { CompletionItem, CompletionItemKind, SnippetString } from "vscode";
 
-class ArgumentInputType {
+export class ArgumentInputType {
 	static readonly none = "None";
 	static readonly string = "String";
 	static readonly enum = "Enum";

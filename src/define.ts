@@ -3,8 +3,11 @@
 // C#側の定義と同じ物です。
 
 export class ProjectDefine {
+	ScenarioPath!: string;
+	ResourcePath!: string;
 	Tags!: TagDefine[];
 	CompletionItem!: CompletionItemDefine;
+	Paths!: PathDefine[];
 }
 
 export class TagDefine {
@@ -46,4 +49,9 @@ export class ArgumentValueDefine {
 	Value!: string;
 	SecondaryKey!: string;
 	SecondaryKeyValue!: string;
+}
+
+export class PathDefine {
+	Category!: string;
+	RootPath!: string;
 }

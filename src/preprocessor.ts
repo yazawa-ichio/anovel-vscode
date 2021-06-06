@@ -1,20 +1,20 @@
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { workspace } from "vscode";
-import { ProjectDefine } from "./define";
 import { LineData, LineDataToken } from "./linedata";
 import { PreProcessResult } from "./preprocessresult";
+import { Project } from "./project";
 
 export class PreProcessor {
 	private projectPath: string;
-	private projectRoot: string;
-	private define: ProjectDefine;
+	private scenarioRoot: string;
+	private project: Project;
 	private cache: Map<string, PreProcessResult>;
 
-	constructor(projectPath: string, define: ProjectDefine) {
+	constructor(projectPath: string, project: Project) {
 		this.projectPath = projectPath;
-		this.projectRoot = dirname(projectPath);
-		this.define = define;
+		this.scenarioRoot = join(dirname(projectPath), project.define.ScenarioPath);
+		this.project = project;
 		this.cache = new Map();
 	}
 
@@ -24,7 +24,7 @@ export class PreProcessor {
 		if (result !== undefined) {
 			return result;
 		}
-		result = new PreProcessResult(fullPath);
+		result = new PreProcessResult(fullPath, this.project);
 		this.cache.set(path, result);
 		const text = (await workspace.openTextDocument(path))?.getText() ?? readFileSync(path).toString();
 		const lines = text.split("\n").map(x => x.trim());
@@ -38,7 +38,7 @@ export class PreProcessor {
 			if (data.name === "import") {
 				const importPath = data.dic.get("path");
 				if (importPath !== undefined) {
-					result.import(await this.run(join(this.projectRoot, importPath)));
+					result.import(await this.run(join(this.scenarioRoot, importPath)));
 				}
 				continue;
 			}
@@ -71,7 +71,7 @@ export class PreProcessor {
 	}
 
 	private tryAddReplaceTag(result: PreProcessResult, data: LineData) {
-		for (const replaceTag of this.define.CompletionItem.ReplaceTag) {
+		for (const replaceTag of this.project.define.CompletionItem.ReplaceTag) {
 			if (replaceTag.LineType === data.lineType && replaceTag.RegisterTag === data.name) {
 				let replaceKey = replaceTag.Key ?? "";
 				let replace = replaceTag.Replace ?? "";
@@ -93,7 +93,7 @@ export class PreProcessor {
 	}
 
 	private tryAddArgumentValue(result: PreProcessResult, data: LineData) {
-		for (const argumentValue of this.define.CompletionItem.ArgumentValue) {
+		for (const argumentValue of this.project.define.CompletionItem.ArgumentValue) {
 			if (argumentValue.LineType === data.lineType && argumentValue.RegisterTag === data.name) {
 				const tag = argumentValue.TargetTag ?? "";
 				const argument = argumentValue.Argument ?? "";

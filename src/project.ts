@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-import { dirname } from "path";
+import { dirname, join } from "path";
 import { CompletionContext, Position, TextDocument, Uri, CompletionItem, CompletionItemKind } from "vscode";
 import { ProjectDefine } from "./define";
 import { LineData } from "./linedata";
@@ -12,6 +12,7 @@ export class Project {
 
 	public readonly file: Uri;
 	public readonly dir: string;
+	public readonly resourceDir: string;
 	define: ProjectDefine;
 
 	tagNames: Map<string, CompletionItem[]>;
@@ -23,9 +24,10 @@ export class Project {
 		this.dir = dirname(file.fsPath);
 		const json = readFileSync(file.fsPath).toString();
 		this.define = JSON.parse(json) as ProjectDefine;
+		this.resourceDir = join(this.dir, this.define.ResourcePath);
 		this.tagNames = new Map<string, CompletionItem[]>();
 		this.tags = new Map<string, TagData>();
-		this.preProcessor = new PreProcessor(file.fsPath, this.define);
+		this.preProcessor = new PreProcessor(file.fsPath, this);
 		this.initTags();
 	}
 
@@ -38,7 +40,7 @@ export class Project {
 			const item = new CompletionItem(tag.Name, CompletionItemKind.Method);
 			item.documentation = tag.Description;
 			items?.push(item);
-			this.tags.set(tag.LineType + tag.Name, new TagData(tag));
+			this.tags.set(tag.LineType + tag.Name, new TagData(tag, this));
 		}
 	}
 
