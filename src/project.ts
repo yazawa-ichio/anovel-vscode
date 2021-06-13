@@ -103,7 +103,7 @@ export class Project {
 		}
 		const tokenIndex = line.firstNonWhitespaceCharacterIndex;
 		const token = line.text.charAt(tokenIndex);
-		if (token !== '@' && token !== '&' && token !== '&') {
+		if (token !== '@' && token !== '&' && token !== '#') {
 			return [undefined, undefined];
 		}
 		const nameEndIndex = line.text.indexOf(" ", tokenIndex);
